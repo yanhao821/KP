@@ -80,7 +80,7 @@ def readLangs(lang1, lang2, train_source, train_target, test_source):
 
 def prepareData(lang1, lang2, train_source, train_target, test_source):
     input_lang, output_lang, pairs, test_input = readLangs(lang1, lang2, train_source, train_target, test_source)
-    print("Read %s sentence pairs" % len(pairs) + len(test_source))
+    print("Read %d sentence pairs" % len(pairs) + len(test_source))
 
     print("Counting words...")
     for pair in pairs:
