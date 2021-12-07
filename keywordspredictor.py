@@ -80,7 +80,7 @@ def readLangs(lang1, lang2, train_source, train_target, test_source):
 
 def prepareData(lang1, lang2, train_source, train_target, test_source):
     input_lang, output_lang, pairs, test_input = readLangs(lang1, lang2, train_source, train_target, test_source)
-    print("Read %d sentence pairs" % len(pairs) + len(test_source))
+    print("Read %s sentence pairs" % str(len(pairs) + len(test_source)))
 
     print("Counting words...")
     for pair in pairs:
@@ -301,7 +301,7 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
         return decoded_words, decoder_attentions[:di + 1]
 
 def evaluate(encoder, decoder):
-    with open('./results/keywords.txt', 'r') as out_file:
+    with open('./results/keywords.txt', 'w') as out_file:
         for sent in test_input:
             print('> ', sent)
             output_words, attentions = evaluate(encoder, decoder, sent)
