@@ -21,7 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 SOS_token = 0
 EOS_token = 1
-MAX_LENGTH = 50
+MAX_LENGTH = 100
 
 
 class Lang:
@@ -62,33 +62,38 @@ def normalizeString(s):
     return s
 
 
-def readLangs(lang1, lang2, source, target):
+def readLangs(lang1, lang2, train_source, train_target, test_source):
     # Split every line into pairs and normalize
     # pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
-    source = [normalizeString(s) for s in source]
-    target = [normalizeString(s) for s in target]
+    train_source = [normalizeString(s) for s in train_source]
+    train_target = [normalizeString(s) for s in train_target]
+    test_source = [normalizeString(s) for s in test_source]
 
     pairs = []
-    for src, tar in zip(source, target):
+    for src, tar in zip(train_source, train_target):
         pairs.append([src, tar])
 
     input_lang = Lang(lang1)
     output_lang = Lang(lang2)
 
-    return input_lang, output_lang, pairs
+    return input_lang, output_lang, pairs, test_source
 
-def prepareData(lang1, lang2, source, target):
-    input_lang, output_lang, pairs = readLangs(lang1, lang2, source, target)
-    print("Read %s sentence pairs" % len(pairs))
+def prepareData(lang1, lang2, train_source, train_target, test_source):
+    input_lang, output_lang, pairs, test_input = readLangs(lang1, lang2, train_source, train_target, test_source)
+    print("Read %s sentence pairs" % len(pairs) + len(test_source))
 
     print("Counting words...")
     for pair in pairs:
         input_lang.addSentence(pair[0])
         output_lang.addSentence(pair[1])
+    for sent in test_input:
+        input_lang.addSentence(sent)
+
     print("Counted words:")
     print(input_lang.name, input_lang.n_words)
     print(output_lang.name, output_lang.n_words)
-    return input_lang, output_lang, pairs
+    return input_lang, output_lang, pairs, test_input
+
 
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size):
@@ -295,13 +300,15 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
 
         return decoded_words, decoder_attentions[:di + 1]
 
-def evaluateRandomly(encoder, decoder):
-    for sent in test_input:
-        print('> ', sent)
-        output_words, attentions = evaluate(encoder, decoder, sent)
-        output_sentence = ' '.join(output_words)
-        print(' = ', output_sentence)
-        print('\n')
+def evaluate(encoder, decoder):
+    with open('./results/keywords.txt', 'r') as out_file:
+        for sent in test_input:
+            print('> ', sent)
+            output_words, attentions = evaluate(encoder, decoder, sent)
+            output_sentence = ' '.join(output_words)
+            print(' = ', output_sentence)
+            print('\n')
+            out_file.write(output_sentence + '\n')
 
 def read_data(directory):
     data = []
@@ -321,14 +328,14 @@ dev_target = read_data('./dev/target.csv')
 test_source = read_data('./test/source.csv')
 test_target = read_data('./test/target.csv')
 
-input_lang, output_lang, pairs = prepareData('source', 'target', train_source, train_target)
+input_lang, output_lang, pairs, test_input = prepareData('source', 'target', train_source, train_target, test_source)
 print(random.choice(pairs))
 
-test_input = [normalizeString(s) for s in test_source]
+# test_input = [normalizeString(s) for s in test_source]
 
 hidden_size = 256
 encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
 attn_decoder1 = AttnDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.1).to(device)
 
 trainIters(encoder1, attn_decoder1, 75000, print_every=5000)
-# evaluateRandomly(encoder1, attn_decoder1)
+evaluate(encoder1, attn_decoder1)
