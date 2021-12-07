@@ -179,7 +179,7 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, deco
     encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=device)
 
     loss = 0
-    print("input_length: ", input_length)
+    # print("input_length: ", input_length)
     for ei in range(input_length):
         encoder_output, encoder_hidden = encoder(input_tensor[ei], encoder_hidden)
         # print("ei: ", ei, encoder_output)
@@ -247,7 +247,7 @@ def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, lear
         input_tensor = training_pair[0]
         target_tensor = training_pair[1]
 
-        # print("Iter: ", iter, input_tensor, target_tensor)
+        print("Iter: ")
 
         loss = train(input_tensor, target_tensor, encoder,
                      decoder, encoder_optimizer, decoder_optimizer, criterion)
